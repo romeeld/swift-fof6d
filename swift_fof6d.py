@@ -144,7 +144,8 @@ def load_swift_snapshot(path, part_type=1):
         H0=H0, Omega_m=Omega_m, Omega_L=Omega_L,
         part_type=part_type, masses=masses,
     )
-    return pos.astype(np.float64), vel.astype(np.float64), ids, box, meta
+    # was: return pos.astype(np.float64), vel.astype(np.float64), ids, box, meta
+    return pos.astype(np.float64), vel.astype(np.float32), ids, box, meta
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -362,6 +363,7 @@ def run_fof(
     f_vel          = 1.5,
     n_sph          = 32,
     min_group_size = 20,
+    sph_chunk      = 1_000_000,   # ← new
     out_path       = None,
     verbose        = True,
 ):
@@ -413,21 +415,24 @@ def run_fof(
         print(f"  {len(dm_ids):,} particles loaded in "
               f"{time.perf_counter()-t0:.1f}s")
 
-    mem_gb = len(dm_ids) * n_sph * 8 / 1e9
+    mem_gb = len(dm_ids) * n_sph * 28 / 1e9 / sph_chunk * min(sph_chunk, len(dm_ids))
     if verbose and mem_gb > 4.0:
-        print(f"  ⚠  SPH step will use ≈ {mem_gb:.1f} GB  "
-              f"(N={len(dm_ids):,}, n_sph={n_sph})")
+        print(f"  ⚠  SPH step peak ≈ {mem_gb:.1f} GB  "
+              f"(sph_chunk={sph_chunk:,}, n_sph={n_sph})  "
+              f"— reduce --sph-chunk if needed")
 
     # ── 2. Run 6-D FoF on DM ─────────────────────────────────────────────
     if verbose:
         print("Running 6-D FoF on DarkMatter ...")
     t1 = time.perf_counter()
-    dm_result = fof_6d(                          # structured array directly
+    dm_result = fof_6d(
         dm_pos, dm_vel, dm_ids,
         f_pos=f_pos, f_vel=f_vel,
         box_size=box, n_sph=n_sph,
         min_group_size=min_group_size,
+        sph_chunk=sph_chunk,          # ← new
     )
+
     t_fof = time.perf_counter() - t1
     # Convert to structured array — avoids float64 promotion from uint64 IDs
     all_results = {1: dm_result}
@@ -488,12 +493,18 @@ def _cli():
     p.add_argument("--f-vel",    type=float, default=1.5)
     p.add_argument("--n-sph",    type=int,   default=32)
     p.add_argument("--min-size", type=int,   default=20)
+    p.add_argument("--sph-chunk", type=int, default=1_000_000,
+                   help="Particles per SPH query chunk. "
+                        "Reduce to lower peak memory; increase to reduce "
+                        "loop overhead. Peak SPH memory ≈ "
+                        "sph_chunk × n_sph × 28 bytes.")
     p.add_argument("--out",      default=None)
     a = p.parse_args()
     run_fof(
         a.snapshot,
         f_pos=a.f_pos, f_vel=a.f_vel, n_sph=a.n_sph,
-        min_group_size=a.min_size, out_path=a.out,
+        min_group_size=a.min_size, sph_chunk=a.sph_chunk,  
+        out_path=a.out,
     )
 
 if __name__ == "__main__":
