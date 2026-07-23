@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.hdf5
+*.h5
+*.npy
+*.npz
+.ipynb_checkpoints/
+.env
