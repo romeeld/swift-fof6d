@@ -21,6 +21,7 @@ Groups are defined by linking particles that are close in both position and velo
 ## Usage
 ```bash
 python swift_fof6d.py snapshot_0050.hdf5 --f-pos 0.2 --f-vel 1.5 --n-sph 32 --min-size 20
+```
 
 ## Output
 Default: <snapshot>_fof6d.hdf5  [can be overwritten with --out option]
@@ -61,6 +62,7 @@ Default: <snapshot>_fof6d.hdf5  [can be overwritten with --out option]
     └── Mass           (G,)          total DM mass per group [snapshot mass units]
 
 ## Reading the output
+```bash
 import h5py
 import numpy as np
 
@@ -85,11 +87,11 @@ with h5py.File("snapshot_0050_fof6d.hdf5", "r") as f:
 largest_gid = grp_ids[0]
 mask        = dm_gids == largest_gid
 print(f"Largest group: {mask.sum()} DM particles")
+```
 
 ## Performance Notes
-Performance notes
-KD-tree construction and pair queries run in $O(N \log N)$
-The SPH velocity dispersion step allocates an Ndm x n-sph, e.g. for Ndm=1e8 and n-sph=32 this is 25 GB.  For very large simulations, consider reducing n-sph or running on a high-memory node
-Nearest-neighbour assignment for non-DM particle types is fast ($O(M \log N)$ per type) and requires rebuilding the DM KD-tree once per type
+- KD-tree construction and pair queries run in $O(N \log N)$
+- The SPH velocity dispersion step allocates an Ndm x n-sph, e.g. for Ndm=1e8 and n-sph=32 this is 25 GB.  For very large simulations, consider reducing n-sph or running on a high-memory node
+- Nearest-neighbour assignment for non-DM particle types is fast ($O(M \log N)$ per type) and requires rebuilding the DM KD-tree once per type
 
 
