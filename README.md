@@ -24,6 +24,7 @@ python swift_fof6d.py snapshot_0050.hdf5 --f-pos 0.2 --f-vel 1.5 --n-sph 32 --mi
 ```
 
 ## Output
+```bash
 Default: <snapshot>_fof6d.hdf5  [can be overwritten with --out option]
 │
 ├── Header/                         (attributes)
@@ -60,6 +61,7 @@ Default: <snapshot>_fof6d.hdf5  [can be overwritten with --out option]
     ├── GroupID        (G,)          group indices, descending DM size order
     ├── Size           (G,)          DM member count per group
     └── Mass           (G,)          total DM mass per group [snapshot mass units]
+```
 
 ## Reading the output
 ```bash
